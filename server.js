@@ -39,7 +39,6 @@ app.get('/', function (req, res, next) {
     let processList = JSON.parse(stdout)
 
     jobs = jobs.concat(processList)
-    console.log(JSON.stringify(processList, null, 2))
     res.send(jobs)
   })
 })
@@ -73,6 +72,22 @@ app.put('/:jobId/delete', function (req, res, next) {
     res.send({status: true})
   })
 })
+
+app.get('/:jobId/logs', function (req, res, next) {
+  console.log('LOOOOOGS')
+  let lines = 20
+
+  if (req.query.lines) { lines = req.query.lines }
+
+  exec(`pm2 logs --lines ${lines} --nostream ${req.params.jobId} `, (error, stdout, stderr) => {
+    if (error) {
+      console.error(`exec error: ${error}`)
+      return res.status(400).send({error: 'An error has occurred'})
+    }
+    res.send({data: stdout})
+  })
+})
+
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
   var err = new Error('Not Found')
