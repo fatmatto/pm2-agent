@@ -63,6 +63,16 @@ app.put('/:jobId/start', function (req, res, next) {
   })
 })
 
+app.put('/:jobId/restart', function (req, res, next) {
+  exec('pm2 restart ' + req.params.jobId, (error, stdout, stderr) => {
+    if (error) {
+      console.error(`exec error: ${error}`)
+      return res.status(400).send({ error: 'An error has occurred' })
+    }
+    res.send({ status: true })
+  })
+})
+
 app.put('/:jobId/delete', function (req, res, next) {
   exec('pm2 delete ' + req.params.jobId, (error, stdout, stderr) => {
     if (error) {
@@ -104,21 +114,21 @@ app.post('/:jobId/update', function (req, res, next) {
     let processList = JSON.parse(stdout)
 
     jobs = jobs.concat(processList)
-    console.log('I have the processlist con '+processList.length+" elementi")
-    console.log("\n\n*******************************\n\n")
-    console.log("Cerco un job con id "+req.params.jobId)
+    console.log('I have the processlist con ' + processList.length + ' elementi')
+    console.log('\n\n*******************************\n\n')
+    console.log('Cerco un job con id ' + req.params.jobId)
 
     var wantedProcess = processList.find(item => {
-      console.log("Controllo "+item.pm_id)
+      console.log('Controllo ' + item.pm_id)
       return Number(item.pm_id) === Number(req.params.jobId)
     })
 
     if (!wantedProcess) {
-      console.log("Non ho trovato il processo con pm_id "+req.params.jobId)
+      console.log('Non ho trovato il processo con pm_id ' + req.params.jobId)
       return res.status(404).send({})
     }
 
-    console.log("Ho trovato il processo che serve a me, ora ci vado dentro e faccio git pull")
+    console.log('Ho trovato il processo che serve a me, ora ci vado dentro e faccio git pull')
 
     var command = spawn('git', ['pull', 'origin', 'master'], {
       cwd: wantedProcess.pm2_env.pm_cwd
@@ -135,14 +145,12 @@ app.post('/:jobId/update', function (req, res, next) {
     command.on('exit', function (code) {
       console.log('stderr: ' + code.toString())
 
-      if ("0" == code.toString()) {
-        res.status(200).send({status:true})
+      if ('0' == code.toString()) {
+        res.status(200).send({status: true})
       } else {
-        res.status(400).send({status:code.toString()})
+        res.status(400).send({status: code.toString()})
       }
     })
-
-
   })
 })
 
